@@ -13,7 +13,7 @@ import {
   DialogHeader, 
   DialogTitle, 
   DialogDescription 
-} from '@/components/ui/dialog'; // ✅ Added DialogDescription
+} from '@/components/ui/dialog';
 import { Logo } from '@/components/voting/Logo';
 import { BlockchainVisualizer } from '@/components/voting/BlockchainVisualizer';
 import { getBlockchainStats, isValidChain, getBlockchain } from '@/lib/blockchain';
@@ -21,6 +21,9 @@ import { countVotesFromBlockchain } from '@/lib/voteService';
 import { getTotalRegisteredVoters } from '@/lib/votersService';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
+// ✅ Dynamic API URL for Vercel & Render Deployment
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const ADMIN_PASSWORD = 'admin'; 
 
@@ -66,17 +69,17 @@ export default function Admin() {
   const fetchGlobalElectionData = async () => {
     try {
       // Fetch Campaign Name
-      const campRes = await fetch("http://localhost:5000/api/campaign");
+      const campRes = await fetch(`${API_URL}/api/campaign`);
       const campData = await campRes.json();
       if (campData.campaign) setCampaignName(campData.campaign.name);
 
       // Fetch Candidates
-      const candRes = await fetch("http://localhost:5000/api/candidates");
+      const candRes = await fetch(`${API_URL}/api/candidates`);
       const candData = await candRes.json();
       if (candData.candidates) setCandidatesList(candData.candidates);
 
       // Fetch Election End Status to sync UI
-      const statusRes = await fetch("http://localhost:5000/api/election-status");
+      const statusRes = await fetch(`${API_URL}/api/election-status`);
       const statusData = await statusRes.json();
       if (statusData.success && statusData.status?.is_ended) {
         setShowResults(true);
@@ -101,7 +104,7 @@ export default function Admin() {
   const handleStartTimer = async () => {
     const expiryTime = Date.now() + Number(timerMinutes) * 60 * 1000;
     try {
-      const res = await fetch("http://localhost:5000/api/election-status", {
+      const res = await fetch(`${API_URL}/api/election-status`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ end_time: expiryTime, is_ended: false })
@@ -119,7 +122,7 @@ export default function Admin() {
   const handleEndElection = async () => {
     if (confirm("End election for all voters immediately?")) {
       try {
-        const res = await fetch("http://localhost:5000/api/election-status", {
+        const res = await fetch(`${API_URL}/api/election-status`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ is_ended: true })
@@ -139,7 +142,7 @@ export default function Admin() {
 
   const handleUpdateCampaign = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/campaign", {
+      const res = await fetch(`${API_URL}/api/campaign`, {
         method: "POST", 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: campaignName })
@@ -155,7 +158,7 @@ export default function Admin() {
     const newId = newCandidateName.toLowerCase().replace(/\s+/g, '-') + '-' + Math.floor(Math.random() * 1000);
     
     try {
-      const res = await fetch("http://localhost:5000/api/candidates", {
+      const res = await fetch(`${API_URL}/api/candidates`, {
         method: "POST", 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: newId, name: newCandidateName, role: newCandidateRole })
@@ -174,7 +177,7 @@ export default function Admin() {
 
   const handleRemoveCandidate = async (id: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/candidates/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_URL}/api/candidates/${id}`, { method: "DELETE" });
       if (res.ok) {
         fetchGlobalElectionData(); 
         toast.success('Candidate permanently removed');

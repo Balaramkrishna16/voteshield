@@ -8,6 +8,9 @@ import { MetaMaskButton } from '@/components/voting/MetaMaskButton';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
+// ✅ Dynamic API URL for Vercel & Render Deployment
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 export default function Landing() {
   const navigate = useNavigate();
   
@@ -31,7 +34,7 @@ export default function Landing() {
 
   // ✅ Fetch Global Campaign Name from DB
   useEffect(() => {
-    fetch("http://localhost:5000/api/campaign")
+    fetch(`${API_URL}/api/campaign`)
       .then(res => res.json())
       .then(data => {
         if (data.campaign) setCampaignName(data.campaign.name);
@@ -46,8 +49,8 @@ export default function Landing() {
 
     setIsLoading(true);
     try {
-      // ✅ Fetch decrypted voter info from secure backend
-      const response = await fetch(`http://localhost:5000/api/voter/${upperId}`);
+      // ✅ Fetch decrypted voter info from secure backend using API_URL
+      const response = await fetch(`${API_URL}/api/voter/${upperId}`);
       const data = await response.json();
       
       if (data.success && data.voter) {
@@ -96,8 +99,8 @@ export default function Landing() {
       let formattedPhone = regPhone.replace(/\D/g, ''); 
       if (formattedPhone.length === 10) formattedPhone = `+91${formattedPhone}`;
 
-      // ✅ Send to secure backend for Bcrypt hashing and AES Encryption
-      const response = await fetch("http://localhost:5000/api/register", {
+      // ✅ Send to secure backend using API_URL
+      const response = await fetch(`${API_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

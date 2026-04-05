@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Clock } from 'lucide-react';
 
+// ✅ Dynamic API URL for Vercel & Render Deployment
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 export function CountdownTimer() {
   const [timeLeft, setTimeLeft] = useState<string>('LOADING...');
   const [endTime, setEndTime] = useState<number | null>(null);
@@ -10,7 +13,8 @@ export function CountdownTimer() {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/election-status");
+        // Use API_URL here
+        const res = await fetch(`${API_URL}/api/election-status`);
         const data = await res.json();
         if (data.success && data.status) {
           setEndTime(data.status.end_time);

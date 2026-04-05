@@ -7,7 +7,7 @@ import { CountdownTimer } from '@/components/voting/CountdownTimer';
 import { CandidateCard } from '@/components/voting/CandidateCard';
 import { VoteModal } from '@/components/voting/VoteModal';
 import { QRReceipt } from '@/components/voting/QRReceipt';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { VoteRecord } from '@/lib/votingStore'; 
 import { getEtherscanUrl } from '@/lib/ethereum';
 import { toast } from 'sonner';
@@ -17,6 +17,9 @@ import {
   recordVoteInDatabase,
 } from '@/lib/voteService';
 import { hasVotedOnChain } from '@/lib/ethereum';
+
+// ✅ Dynamic API URL for Vercel & Render Deployment
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function VoteDashboard() {
   const navigate = useNavigate();
@@ -48,15 +51,15 @@ export default function VoteDashboard() {
       setIsLoading(true);
 
       try {
-        // 1. Fetch Decrypted Voter Info from Secure Backend
-        const voterRes = await fetch(`http://localhost:5000/api/voter/${user}`);
+        // 1. Fetch Decrypted Voter Info from Secure Backend using API_URL
+        const voterRes = await fetch(`${API_URL}/api/voter/${user}`);
         const voterData = await voterRes.json();
         if (voterData.success && voterData.voter) {
           setVoterName(voterData.voter.name);
         }
 
-        // 2. Fetch Candidates from Database
-        const candRes = await fetch("http://localhost:5000/api/candidates");
+        // 2. Fetch Candidates from Database using API_URL
+        const candRes = await fetch(`${API_URL}/api/candidates`);
         const candData = await candRes.json();
         if (candData.success) {
           setCandidates(candData.candidates);
@@ -84,7 +87,8 @@ export default function VoteDashboard() {
     // ✅ GLOBAL SYNC: Check Election Status from Database
     const syncElectionStatus = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/election-status");
+        // Use API_URL here
+        const res = await fetch(`${API_URL}/api/election-status`);
         const data = await res.json();
         
         if (data.success && data.status) {
@@ -284,6 +288,9 @@ export default function VoteDashboard() {
             <DialogTitle className="flex items-center gap-2">
               <ShieldCheck className="text-success w-5 h-5" /> Immutable Vote Receipt
             </DialogTitle>
+            <DialogDescription>
+              This is your official cryptographic receipt for your vote.
+            </DialogDescription>
           </DialogHeader>
           {userVote && (
             <QRReceipt

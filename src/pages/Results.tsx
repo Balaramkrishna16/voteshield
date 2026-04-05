@@ -10,6 +10,9 @@ import { getTotalRegisteredVoters } from '@/lib/votersService';
 import { Logo } from '@/components/voting/Logo';
 import { Button } from '@/components/ui/button';
 
+// ✅ Dynamic API URL for Vercel & Render Deployment
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 // Colors for hardcoded IDs if they exist, others will use dynamic HSL
 const CANDIDATE_COLORS: Record<string, string> = {
   alice: '#8b5cf6', // violet
@@ -33,8 +36,8 @@ export default function Results() {
   const fetchResults = async () => {
     setIsRefreshing(true);
     try {
-      // 1. Fetch Permanent Candidates from DB
-      const candRes = await fetch("http://localhost:5000/api/candidates");
+      // 1. Fetch Permanent Candidates from DB using API_URL
+      const candRes = await fetch(`${API_URL}/api/candidates`);
       const candData = await candRes.json();
       let currentCandidates = [];
       if (candData.success) {

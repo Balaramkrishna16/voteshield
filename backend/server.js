@@ -152,7 +152,6 @@ app.post("/api/vote", async (req, res) => {
   try {
     const { candidateId } = req.body;
 
-    // Check if election is actually active
     const { data: status } = await supabase.from('election_status').select('*').eq('id', 1).maybeSingle();
     if (status?.is_ended || (status?.end_time && Date.now() >= status.end_time)) {
       return res.status(403).json({ success: false, message: "Voting has ended." });
@@ -260,7 +259,6 @@ app.post("/api/verify-pin", async (req, res) => {
   }
 });
 
-// ---------------------- SERVER START ----------------------
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT} 🚀`);

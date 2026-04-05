@@ -3,47 +3,35 @@ import { useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import {
   ArrowLeft, Lock, BarChart3, Users, Blocks, Database, 
-  Shield, Clock, Trophy, LayoutDashboard, Settings, Plus, Trash2, AlertTriangle
+  Shield, Clock, Trophy, LayoutDashboard, Settings, Plus, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription 
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Logo } from '@/components/voting/Logo';
 import { BlockchainVisualizer } from '@/components/voting/BlockchainVisualizer';
-import { getBlockchainStats, isValidChain, getBlockchain } from '@/lib/blockchain';
+import { getBlockchainStats } from '@/lib/blockchain';
 import { countVotesFromBlockchain } from '@/lib/voteService';
 import { getTotalRegisteredVoters } from '@/lib/votersService';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 
-// ✅ Dynamic API URL for Vercel & Render Deployment
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
 const ADMIN_PASSWORD = 'admin'; 
 
 export default function Admin() {
   const navigate = useNavigate();
   
-  // Auth & UI State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [showLoginDialog, setShowLoginDialog] = useState(true);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'campaign'>('dashboard');
   
-  // Election State
   const [showResults, setShowResults] = useState(false);
   const [blockchainStats, setBlockchainStats] = useState(getBlockchainStats());
   const [voteCounts, setVoteCounts] = useState<{ [key: string]: number; total: number }>({ total: 0 });
   const [totalVoters, setTotalVoters] = useState<number>(0);
   const [timerMinutes, setTimerMinutes] = useState('60');
 
-  // Database-backed Campaign State
   const [campaignName, setCampaignName] = useState('Loading...');
   const [candidatesList, setCandidatesList] = useState<any[]>([]);
   const [newCandidateName, setNewCandidateName] = useState('');
@@ -68,17 +56,14 @@ export default function Admin() {
 
   const fetchGlobalElectionData = async () => {
     try {
-      // Fetch Campaign Name
       const campRes = await fetch(`${API_URL}/api/campaign`);
       const campData = await campRes.json();
       if (campData.campaign) setCampaignName(campData.campaign.name);
 
-      // Fetch Candidates
       const candRes = await fetch(`${API_URL}/api/candidates`);
       const candData = await candRes.json();
       if (candData.candidates) setCandidatesList(candData.candidates);
 
-      // Fetch Election End Status to sync UI
       const statusRes = await fetch(`${API_URL}/api/election-status`);
       const statusData = await statusRes.json();
       if (statusData.success && statusData.status?.is_ended) {
@@ -98,8 +83,6 @@ export default function Admin() {
       toast.error('Invalid password');
     }
   };
-
-  // ================= GLOBAL TIMER & END STATUS =================
 
   const handleStartTimer = async () => {
     const expiryTime = Date.now() + Number(timerMinutes) * 60 * 1000;
@@ -137,8 +120,6 @@ export default function Admin() {
       }
     }
   };
-
-  // ================= CAMPAIGN MANAGEMENT (DATABASE) =================
 
   const handleUpdateCampaign = async () => {
     try {
@@ -216,7 +197,6 @@ export default function Admin() {
     <div className="min-h-screen bg-background">
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
 
-      {/* Header */}
       <header className="relative border-b bg-background/80 backdrop-blur-xl z-10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-6">
@@ -236,7 +216,6 @@ export default function Admin() {
 
       <main className="relative max-w-7xl mx-auto px-6 py-8 z-10">
         
-        {/* ================= DASHBOARD TAB ================= */}
         {activeTab === 'dashboard' && (
           <div className="animate-in fade-in duration-500">
             <div className="mb-8 flex justify-between items-center">
@@ -253,7 +232,6 @@ export default function Admin() {
               </div>
             </div>
 
-            {/* Timer Control */}
             <div className="glass-card p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 border-primary/30">
               <div>
                 <h3 className="text-lg font-bold flex items-center gap-2"><Clock className="w-5 h-5 text-primary"/> Global Election Timer</h3>
@@ -265,7 +243,6 @@ export default function Admin() {
               </div>
             </div>
 
-            {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
               <div className="glass-card p-4"><p className="text-sm text-muted-foreground">Registered Voters</p><p className="text-2xl font-bold">{totalVoters}</p></div>
               <div className="glass-card p-4 border-success/50"><p className="text-sm text-muted-foreground text-success">Votes Cast (On-Chain)</p><p className="text-2xl font-bold text-success">{voteCounts.total}</p></div>
@@ -280,7 +257,6 @@ export default function Admin() {
           </div>
         )}
 
-        {/* ================= CAMPAIGN SETUP TAB ================= */}
         {activeTab === 'campaign' && (
           <div className="animate-in fade-in duration-500 max-w-4xl mx-auto space-y-8">
             

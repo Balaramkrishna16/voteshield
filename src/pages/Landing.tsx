@@ -8,31 +8,26 @@ import { MetaMaskButton } from '@/components/voting/MetaMaskButton';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-// ✅ Dynamic API URL for Vercel & Render Deployment
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function Landing() {
   const navigate = useNavigate();
   
-  // App State
   const [campaignName, setCampaignName] = useState('Official College Election');
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Login State
   const [collegeId, setCollegeId] = useState('');
   const [voterInfo, setVoterInfo] = useState<any>(null);
   const [isOtpVerified, setIsOtpVerified] = useState(false);
 
-  // Sign Up State
   const [regName, setRegName] = useState('');
-  const [regIdSuffix, setRegIdSuffix] = useState(''); // Stores the part AFTER "PSCMR"
+  const [regIdSuffix, setRegIdSuffix] = useState(''); 
   const [regDept, setRegDept] = useState('');
   const [regYear, setRegYear] = useState(''); 
   const [regPhone, setRegPhone] = useState('');
   const [regPin, setRegPin] = useState('');
 
-  // ✅ Fetch Global Campaign Name from DB
   useEffect(() => {
     fetch(`${API_URL}/api/campaign`)
       .then(res => res.json())
@@ -42,26 +37,20 @@ export default function Landing() {
       .catch(() => console.log("Using default campaign name"));
   }, []);
 
-  // ===================== SECURE LOGIN LOGIC =====================
   const handleVerifyId = async () => {
     const upperId = collegeId.toUpperCase().trim();
     if (!upperId) return toast.error('Please enter a valid Voter ID');
 
     setIsLoading(true);
     try {
-      // ✅ Fetch decrypted voter info from secure backend using API_URL
       const response = await fetch(`${API_URL}/api/voter/${upperId}`);
       const data = await response.json();
       
       if (data.success && data.voter) {
         setVoterInfo(data.voter);
         setCollegeId(upperId);
-        
         toast.success(`Voter Verified: Welcome ${data.voter.name}!`);
-        
-        // ✅ DEV BYPASS: Instantly verify OTP so the user can skip the Twilio step!
         setIsOtpVerified(true); 
-
       } else {
         setVoterInfo(null);
         toast.error('Voter ID not found. Please Sign Up first.');
@@ -83,23 +72,19 @@ export default function Landing() {
     navigate('/vote');
   };
 
-  // ===================== SECURE SIGN UP LOGIC =====================
   const handleRegister = async () => {
     const fullVoterId = `PSCMR${regIdSuffix.toUpperCase().trim()}`;
 
     if (!regName || !regIdSuffix || !regDept || !regYear || !regPhone || !regPin) {
       return toast.error("Please fill in all fields");
     }
-    if (regPin.length !== 4) {
-      return toast.error("Voting PIN must be exactly 4 digits");
-    }
+    if (regPin.length !== 4) return toast.error("Voting PIN must be exactly 4 digits");
 
     setIsLoading(true);
     try {
       let formattedPhone = regPhone.replace(/\D/g, ''); 
       if (formattedPhone.length === 10) formattedPhone = `+91${formattedPhone}`;
 
-      // ✅ Send to secure backend using API_URL
       const response = await fetch(`${API_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -124,8 +109,6 @@ export default function Landing() {
       toast.success("Registration secure & successful! You can now login.");
       setCollegeId(fullVoterId); 
       setAuthMode('login'); 
-      
-      // Reset signup form
       setRegName(''); setRegIdSuffix(''); setRegDept(''); setRegYear(''); setRegPhone(''); setRegPin('');
 
     } catch (err: any) {
@@ -141,7 +124,6 @@ export default function Landing() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Header */}
       <header className="relative z-10 p-6 flex justify-between items-center max-w-7xl mx-auto w-full">
         <Logo />
         <div className="flex items-center gap-2 md:gap-4">
@@ -154,7 +136,6 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="relative z-10 flex-1 flex items-center justify-center p-6">
         <div className="max-w-6xl w-full grid md:grid-cols-2 gap-12 items-center">
           
@@ -187,11 +168,9 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Right Auth Card */}
           <div className="fade-in-up-delay-2">
             <div className="glass-card p-6 md:p-8 rounded-2xl border border-primary/20 shadow-2xl bg-background/50 backdrop-blur-xl max-w-md mx-auto w-full">
               
-              {/* Auth Toggle */}
               <div className="flex p-1 bg-secondary/50 rounded-xl mb-8 border border-border">
                 <button 
                   onClick={() => setAuthMode('login')} 
@@ -207,7 +186,6 @@ export default function Landing() {
                 </button>
               </div>
 
-              {/* ===================== LOGIN TAB ===================== */}
               {authMode === 'login' && (
                 <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
                   <div className="space-y-3">
@@ -256,7 +234,6 @@ export default function Landing() {
                 </div>
               )}
 
-              {/* ===================== SIGN UP TAB ===================== */}
               {authMode === 'signup' && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                   <div className="text-center mb-4">

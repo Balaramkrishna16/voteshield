@@ -18,19 +18,16 @@ import {
 } from '@/lib/voteService';
 import { hasVotedOnChain } from '@/lib/ethereum';
 
-// ✅ Dynamic API URL for Vercel & Render Deployment
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function VoteDashboard() {
   const navigate = useNavigate();
 
-  // User & Candidate States
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [voterName, setVoterName] = useState<string>('');
   const [Candidates, setCandidates] = useState<any[]>([]); 
   const [isLoading, setIsLoading] = useState(true);
 
-  // Selection & UI States
   const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const [voteRecord, setVoteRecord] = useState<VoteRecord | null>(null);
@@ -39,7 +36,6 @@ export default function VoteDashboard() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [electionEnded, setElectionEnded] = useState(false);
 
-  // ✅ INITIAL LOAD: Decrypt User & Fetch Candidates from DB
   useEffect(() => {
     const initializePage = async () => {
       const user = localStorage.getItem('voteshield_user');
@@ -51,21 +47,18 @@ export default function VoteDashboard() {
       setIsLoading(true);
 
       try {
-        // 1. Fetch Decrypted Voter Info from Secure Backend using API_URL
         const voterRes = await fetch(`${API_URL}/api/voter/${user}`);
         const voterData = await voterRes.json();
         if (voterData.success && voterData.voter) {
           setVoterName(voterData.voter.name);
         }
 
-        // 2. Fetch Candidates from Database using API_URL
         const candRes = await fetch(`${API_URL}/api/candidates`);
         const candData = await candRes.json();
         if (candData.success) {
           setCandidates(candData.candidates);
         }
 
-        // 3. Check Voting Status
         const voted = await hasVoterVoted(user);
         setHasVoted(voted);
 
@@ -83,18 +76,16 @@ export default function VoteDashboard() {
     };
 
     initializePage();
+  }, [navigate]);
 
-    // ✅ GLOBAL SYNC: Check Election Status from Database
+  useEffect(() => {
     const syncElectionStatus = async () => {
       try {
-        // Use API_URL here
         const res = await fetch(`${API_URL}/api/election-status`);
         const data = await res.json();
         
         if (data.success && data.status) {
           const { end_time, is_ended } = data.status;
-          
-          // Lock screen if admin clicked End OR if time is up
           if (is_ended || (end_time && Date.now() >= end_time)) {
             setElectionEnded(true);
           } else {
@@ -106,37 +97,24 @@ export default function VoteDashboard() {
       }
     };
 
-    syncElectionStatus(); // Immediate check
-    const interval = setInterval(syncElectionStatus, 3000); // Sync every 3 seconds
-
+    syncElectionStatus(); 
+    const interval = setInterval(syncElectionStatus, 3000); 
     return () => clearInterval(interval);
-  }, [navigate]);
+  }, []);
 
-  // ✅ HANDLE VOTE
   const handleVote = async (candidateId: string) => {
     if (!currentUser) return;
-
-    if (electionEnded) {
-      toast.error('Voting is closed! The election time has expired.');
-      return;
-    }
+    if (electionEnded) return toast.error('Voting is closed! The election time has expired.');
 
     const alreadyVotedOnChain = await hasVotedOnChain(currentUser);
-    if (alreadyVotedOnChain) {
-      toast.error('You have already voted! (Blockchain enforced)');
-      return;
-    }
+    if (alreadyVotedOnChain) return toast.error('You have already voted! (Blockchain enforced)');
 
-    if (hasVoted) {
-      toast.error('You have already voted!');
-      return;
-    }
+    if (hasVoted) return toast.error('You have already voted!');
 
     setSelectedCandidate(candidateId);
     setIsVoting(true);
   };
 
-  // ✅ AFTER BLOCKCHAIN SUCCESS
   const handleVoteComplete = async (txResult: any) => {
     if (!currentUser) return;
 
@@ -169,7 +147,7 @@ export default function VoteDashboard() {
     navigate('/');
   };
 
-  const votedCandidateId = userVote?.candidateId;
+  const votedCandidateId = userVote?.candidateId || userVote?.candidate_id;
   const getVotedCandidateName = () => {
     if (!votedCandidateId) return '';
     const candidate = Candidates.find((c: any) => c.id === votedCandidateId);
@@ -178,7 +156,6 @@ export default function VoteDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* HEADER */}
       <header className="border-b bg-background/80 backdrop-blur-xl sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <Logo />
@@ -191,10 +168,7 @@ export default function VoteDashboard() {
         </div>
       </header>
 
-      {/* MAIN CONTENT */}
       <main className="max-w-7xl mx-auto px-6 py-8">
-        
-        {/* USER INFO BAR */}
         <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <div className="flex gap-4 flex-wrap">
             <div className="glass-card px-4 py-2 flex items-center gap-2 border-primary/20">
@@ -221,7 +195,6 @@ export default function VoteDashboard() {
           )}
         </div>
 
-        {/* ELECTION STATUS BANNER */}
         {electionEnded && (
           <div className="bg-destructive/10 border-2 border-destructive text-destructive px-6 py-6 rounded-2xl text-center mb-10 flex flex-col items-center justify-center gap-2 animate-in fade-in slide-in-from-top-4 duration-500">
             <div className="flex items-center gap-3 font-bold text-2xl">
@@ -232,13 +205,11 @@ export default function VoteDashboard() {
           </div>
         )}
 
-        {/* BALLOT TITLE */}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold tracking-tight">Cast Your Ballot</h1>
           <p className="text-muted-foreground mt-2">Select one candidate to represent your department.</p>
         </div>
 
-        {/* LOADING STATE */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <Loader2 className="w-10 h-10 animate-spin text-primary" />
@@ -267,7 +238,6 @@ export default function VoteDashboard() {
         )}
       </main>
 
-      {/* VOTE MODAL */}
       <VoteModal
         isOpen={isVoting}
         onClose={() => {
@@ -281,7 +251,6 @@ export default function VoteDashboard() {
         onComplete={handleVoteComplete}
       />
 
-      {/* RECEIPT DIALOG */}
       <Dialog open={showReceipt} onOpenChange={setShowReceipt}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

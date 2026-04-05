@@ -35,7 +35,7 @@ useEffect(() => {
     setIsSending(true);
     setError('');
     try {
-      const res = await fetch('http://localhost:5000/api/send-otp', {
+      const res = await fetch(`${API_URL}/api/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phoneNumber: formattedPhone }),
@@ -66,7 +66,7 @@ useEffect(() => {
     setIsVerifying(true);
     setError('');
     try {
-      const res = await fetch('http://localhost:5000/api/verify-otp', {
+      const res = await fetch(`${API_URL}/api/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phoneNumber: formattedPhone, otp }),

@@ -74,7 +74,7 @@ export function VoteModal({
     setLoadingPin(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/verify-pin", {
+      const res = await fetch(`${API_URL}/api/verify-pin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

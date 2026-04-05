@@ -10,7 +10,7 @@ interface OTPInputProps {
   number: string;
   disabled?: boolean;
 }
-
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 export function OTPInput({ onVerify, number, disabled,voterId }: OTPInputProps) {
   const [otp, setOtp] = useState('');
   const [isSending, setIsSending] = useState(false);

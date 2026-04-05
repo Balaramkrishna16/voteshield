@@ -20,8 +20,7 @@ export async function getPhoneNumber(voterId: string) {
   return data?.phone_number || null;
 }
 
-
-// 🧠 COUNT VOTES FROM BLOCKCHAIN (FINAL FIX)
+// 🧠 COUNT VOTES FROM BLOCKCHAIN (DYNAMIC & FILTERED)
 export async function countVotesFromBlockchain(): Promise<{
   [candidateId: string]: number;
   total: number;
@@ -35,23 +34,35 @@ export async function countVotesFromBlockchain(): Promise<{
       provider
     );
 
+    // 1️⃣ Fetch the valid transaction hashes for the CURRENT campaign from Supabase
+    const { data: currentVotes, error } = await supabase.from('votes').select('tx_hash');
+    if (error) console.error("Error fetching current campaign votes from DB:", error);
+    
+    // Create a fast lookup Set of the valid hashes
+    const validTxHashes = new Set((currentVotes || []).map(v => v.tx_hash));
+
+    // 2️⃣ Fetch ALL events ever recorded on the blockchain
     const filter = contract.filters.Voted();
     const events = await contract.queryFilter(filter, 0, 'latest');
 
-    // 🔥 FIX: Removed hardcoded alice/bob/carol. Now it accepts ANY dynamic candidate ID.
+    // 🔥 FIX 1: Removed hardcoded names. Now it dynamically accepts ANY candidate ID.
     const counts: { [candidateId: string]: number } = {};
     let total = 0;
 
     for (const event of events) {
       try {
-        const args = (event as any).args;
+        // 🔥 FIX 2: If this blockchain vote's hash is NOT in our current database, skip it!
+        if (!validTxHashes.has(event.transactionHash)) {
+          continue; 
+        }
 
+        const args = (event as any).args;
         if (!args || args.length < 2) continue;
 
         // Force string conversion to ensure it matches DB IDs perfectly
         const candidateId = String(args[1]); 
 
-        // 🔥 FIX: Dynamically add the candidate to the count object if they don't exist yet
+        // Dynamically add the candidate to the count object if they don't exist yet
         if (!counts[candidateId]) {
           counts[candidateId] = 0;
         }
@@ -71,7 +82,6 @@ export async function countVotesFromBlockchain(): Promise<{
     return { total: 0 };
   }
 }
-
 
 // 📝 RECORD VOTE (WITH SAFE DUPLICATE CHECK)
 export async function recordVoteInDatabase(
@@ -107,7 +117,6 @@ export async function recordVoteInDatabase(
   return true;
 }
 
-
 // ✅ CHECK IF VOTER HAS VOTED (NO 406)
 export async function hasVoterVoted(voterId: string): Promise<boolean> {
   const { data, error } = await supabase
@@ -124,7 +133,6 @@ export async function hasVoterVoted(voterId: string): Promise<boolean> {
 
   return !!data;
 }
-
 
 // ✅ GET VOTE RECORD
 export async function getVoterVoteRecord(
@@ -146,7 +154,6 @@ export async function getVoterVoteRecord(
   return data;
 }
 
-
 // 🔗 GET ALL TX HASHES
 export async function getAllVoteTxHashes(): Promise<string[]> {
   const { data, error } = await supabase
@@ -161,7 +168,6 @@ export async function getAllVoteTxHashes(): Promise<string[]> {
 
   return data?.map(record => record.tx_hash) || [];
 }
-
 
 // 🔍 VERIFY VOTE FROM BLOCKCHAIN
 export async function verifyVoteFromBlockchain(txHash: string) {
@@ -201,7 +207,6 @@ export async function verifyVoteFromBlockchain(txHash: string) {
     return null;
   }
 }
-
 
 // 📊 GET VOTING STATS
 export async function getVotingStats() {

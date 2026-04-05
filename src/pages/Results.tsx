@@ -29,8 +29,10 @@ export default function Results() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [winner, setWinner] = useState<string | null>(null);
 
-  const fetchResults = async () => {
-    setIsRefreshing(true);
+  // ✅ Added an `isAuto` flag so the button doesn't spin wildly during silent background updates
+  const fetchResults = async (isAuto = false) => {
+    if (!isAuto) setIsRefreshing(true);
+    
     try {
       const candRes = await fetch(`${API_URL}/api/candidates`);
       const candData = await candRes.json();
@@ -41,6 +43,16 @@ export default function Results() {
       }
 
       const onChainCounts = await countVotesFromBlockchain();
+      
+      // ✅ Safety Check: Calculate total votes if the blockchain script didn't include it
+      let calculatedTotal = onChainCounts.total || 0;
+      if (!onChainCounts.total) {
+        calculatedTotal = Object.keys(onChainCounts)
+          .filter(key => key !== 'total')
+          .reduce((sum, key) => sum + (onChainCounts[key] || 0), 0);
+        onChainCounts.total = calculatedTotal;
+      }
+      
       setVoteData(onChainCounts);
       
       const dbTotalVoters = await getTotalRegisteredVoters();
@@ -62,12 +74,17 @@ export default function Results() {
     } catch (error) {
       console.error("Failed to fetch results:", error);
     } finally {
-      setIsRefreshing(false);
+      if (!isAuto) setIsRefreshing(false);
     }
   };
 
+  // ✅ ADDED LIVE AUTO-POLLING (Checks every 5 seconds)
   useEffect(() => {
-    fetchResults();
+    fetchResults(); // Initial load
+    
+    // Check for new votes automatically without requiring manual refreshes
+    const interval = setInterval(() => fetchResults(true), 5000); 
+    return () => clearInterval(interval);
   }, []);
 
   const chartData = candidates.map((c: any, index: number) => ({
@@ -96,7 +113,7 @@ export default function Results() {
             <span className="text-sm text-muted-foreground hidden md:inline">
               Last updated: {lastUpdated.toLocaleTimeString()}
             </span>
-            <Button variant="outline" size="sm" onClick={fetchResults} disabled={isRefreshing} className="gap-2">
+            <Button variant="outline" size="sm" onClick={() => fetchResults(false)} disabled={isRefreshing} className="gap-2">
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               Refresh
             </Button>

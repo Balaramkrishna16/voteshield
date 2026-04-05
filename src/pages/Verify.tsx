@@ -11,21 +11,20 @@ export default function Verify() {
   const [transactionHash, setTransactionHash] = useState('');
   const [searchResult, setSearchResult] = useState<VoteRecord | null | 'not_found'>(null);
   const [isSearching, setIsSearching] = useState(false);
-  const [votedfor , setVotedFor] = useState(null)
+  const [votedfor, setVotedFor] = useState<string | null>(null);
+
   const handleSearch = async () => {
     if (!transactionHash.trim()) return;
     
     setIsSearching(true);
+    // Simulate network delay for UX
     await new Promise((resolve) => setTimeout(resolve, 1500));
     
-    const result =  await verifyVote(transactionHash.trim());
+    const result = await verifyVote(transactionHash.trim());
     setSearchResult(result?.tx || 'not_found');
-    setVotedFor(result?.dat)
+    setVotedFor(result?.dat || null);
     setIsSearching(false);
   };
-
- 
-console.log(searchResult,'result')
 
   return (
     <div className="min-h-screen bg-background">
@@ -80,7 +79,6 @@ console.log(searchResult,'result')
               )}
             </Button>
           </div>
-          
         </div>
 
         {/* Search Result */}
@@ -122,7 +120,6 @@ console.log(searchResult,'result')
                 <div>
                   <p className="text-sm text-muted-foreground">Voted For</p>
                   <p className="font-medium text-foreground">
-                    {/*{getCandidateName(searchResult.candidateId)}*/}
                     {votedfor}
                   </p>
                 </div>

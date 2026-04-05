@@ -22,6 +22,9 @@ import { Progress } from '@/components/ui/progress';
 import { formatHash, VoteRecord } from '@/lib/votingStore';
 import { submitVoteTransaction, getEtherscanUrl } from '@/lib/ethereum';
 
+// ✅ Added the missing API_URL definition here!
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 interface VoteModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -214,8 +217,8 @@ export function VoteModal({
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
                 placeholder="****"
-                maxLength={4} // ✅ FIX
-                className="w-full p-2 border rounded text-center"
+                maxLength={4}
+                className="w-full p-2 border rounded text-center text-foreground bg-background"
               />
 
               {pinError && (
@@ -235,7 +238,7 @@ export function VoteModal({
 
           {(stage === 'signing' || stage === 'submitting') && (
             <>
-              <Loader2 className="animate-spin" />
+              <Loader2 className="animate-spin text-primary w-8 h-8" />
               <p>Please wait...</p>
               <Progress value={progress} className="w-full" />
             </>
@@ -243,15 +246,16 @@ export function VoteModal({
 
           {stage === 'success' && displayRecord && (
             <>
-              <CheckCircle className="text-green-500" />
+              <CheckCircle className="text-green-500 w-12 h-12" />
               <p>Vote recorded successfully!</p>
 
               <Button
                 onClick={() =>
                   window.open(getEtherscanUrl(displayRecord.transactionHash))
                 }
+                className="w-full"
               >
-                <ExternalLink className="mr-2" />
+                <ExternalLink className="mr-2 w-4 h-4" />
                 View on Etherscan
               </Button>
             </>
@@ -259,10 +263,10 @@ export function VoteModal({
 
           {stage === 'error' && (
             <>
-              <AlertTriangle className="text-red-500" />
+              <AlertTriangle className="text-red-500 w-12 h-12" />
               <p>{error}</p>
 
-              <Button onClick={handleSubmit}>
+              <Button onClick={handleSubmit} className="w-full">
                 Try Again
               </Button>
             </>
@@ -272,5 +276,4 @@ export function VoteModal({
       </DialogContent>
     </Dialog>
   );
-
 }

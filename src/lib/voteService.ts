@@ -38,27 +38,26 @@ export async function countVotesFromBlockchain(): Promise<{
     const filter = contract.filters.Voted();
     const events = await contract.queryFilter(filter, 0, 'latest');
 
-    const counts: { [candidateId: string]: number } = {
-      alice: 0,
-      bob: 0,
-      carol: 0
-    };
-
+    // 🔥 FIX: Removed hardcoded alice/bob/carol. Now it accepts ANY dynamic candidate ID.
+    const counts: { [candidateId: string]: number } = {};
     let total = 0;
 
     for (const event of events) {
       try {
-        const args = event.args;
+        const args = (event as any).args;
 
         if (!args || args.length < 2) continue;
 
-        const voterId = args[0];        // ✅ FIXED
-        const candidateId = args[1];    // ✅ FIXED
+        // Force string conversion to ensure it matches DB IDs perfectly
+        const candidateId = String(args[1]); 
 
-        if (counts.hasOwnProperty(candidateId)) {
-          counts[candidateId]++;
-          total++;
+        // 🔥 FIX: Dynamically add the candidate to the count object if they don't exist yet
+        if (!counts[candidateId]) {
+          counts[candidateId] = 0;
         }
+
+        counts[candidateId]++;
+        total++;
 
       } catch (err) {
         console.error("Event parsing error:", err);
@@ -69,7 +68,7 @@ export async function countVotesFromBlockchain(): Promise<{
 
   } catch (error) {
     console.error('Blockchain count error:', error);
-    return { alice: 0, bob: 0, carol: 0, total: 0 };
+    return { total: 0 };
   }
 }
 
